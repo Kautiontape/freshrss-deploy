@@ -1,0 +1,7 @@
+# Daily digest at 6:30 AM ET
+# Cron runs in container timezone (set via TZ env var or container default)
+30 6 * * * cd /app && python digest.py >> /var/log/digest.log 2>&1
+
+# Weekend catchup: Saturday at 7:00 AM, look back 48 hours
+0 7 * * 6 cd /app && python digest.py --since 48 >> /var/log/digest.log 2>&1
+

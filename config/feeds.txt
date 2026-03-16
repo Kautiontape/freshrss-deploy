@@ -1,0 +1,75 @@
+# Feed List
+# Format: CATEGORY | FEED_URL | LABEL
+#
+# Add these to FreshRSS organized by category.
+# YouTube feeds use channel IDs — format: https://www.youtube.com/feeds/videos.xml?channel_id=<ID>
+
+# Deep Dives
+Deep Dives | https://thezvi.substack.com/feed | Zvi - Don't Worry About the Vase
+Deep Dives | https://www.experimental-history.com/feed | Adam Mastroianni - Experimental History
+Deep Dives | https://mindfulmodeler.substack.com/feed | Mindful Modeler
+
+# Daily News
+Daily News | https://www.readtangle.com/archive/rss/ | Tangle
+Daily News | https://rascal.news/rss/ | Rascal News
+Daily News | https://awsweekly.info/feed | AWS Weekly
+Daily News | https://www.thedailyupside.com/feed/ | The Daily Upside
+Daily News | https://sherwood.news/rss.xml | Sherwood News
+
+# YouTube
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCJQEEltSpi8LXqMH8uTrCQQ | Mystic Arts DM
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCH_7doiCkWeq0v3ycWE5lDw | Any Austin
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UClyGlKOhDUooPJFy4v_mqPg | DougDoug
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UC0VVYtw21rg2cokUystu2Dw | SmallAnt
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCy0tKL1T7wFoYcxCe0xjN6Q | Technology Connections
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UC5sc1ysFs7RfjjEFMuQ3ZQw | DougDougDoug
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCRHXUZ0BxbkU2MYZgsuFgkQ | The Spiffing Brit
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCSju5G2aFaWMqn-_0YBtq5A | Stand-up Maths
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCOT2iLov0V7Re7ku_3UBtcQ | hankschannel
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCfHmyqCntYHQ81ZukNu66rg | Razbuten
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCpa-Zb0ZcQjTCPP1Dx_1M8Q | LegalEagle
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UClFSU9_bUb4Rc6OYfTt5SPw | Philip DeFranco
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCmHCNoUXWAFuzxWJdX2d99w | Scott Cramer
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCCYWagpWEequTwx61dYGT0w | Gianmarco Soresi
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCqit4NtRDfdEHKX_zgmAwrg | Morning Brew
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCjFaPUcJU1vwk193mnW_w1w | Modern Vintage Gamer
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCNHb7I85BKnwbJF4fWBXJjA | Etymology Nerd
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCcOTyH3e_jc-Y8NnYC4XYvQ | Britney Clause
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCpnyVXM0hAd6BAjSrmZ8GfQ | The Writer's Block
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCF3jMqkgvFRb6KBbSfsFFtQ | FutureCanoe
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UC0e3QhIYukixgh5VVpKHH9Q | Code Bullet
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UC6nSFpj9HTCZ5t-N3Rm3-HA | Vsauce
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCa7z-_ItWnIOTbB6lMhbo1w | Zipperon Disney
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCb31gOY6OD8ES0zP8M0GhAw | Max Fosh
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCYO_jab_esuFRV4b17AJtAw | 3Blue1Brown
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCZzfw1NZ40-RLtRPVSNUHOw | A-dn
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCCJD5wGU6pLiCHKH2Sr_4fg | Quinns Quest
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCrUYG_HdHO8EucMLcTSP6Bg | The Party
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCRT5u7WaTrJVD_tdRpQIs5A | The Behavioral Arts
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCZB6V9fUov0Mx_us3MWWILg | People Make Games
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCxQrToVDBwHKuyIr47X04yA | Lowest Percent
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCRUULstZRWS1lDvJBzHnkXA | Matt and Tom
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCWqr2tH3dPshNhPjV5h1xRw | Super Bunnyhop
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCMm211NGh4Ls5SAMZJF7E8A | pannenkoek2012
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UC5miyvhPsWWyfTulnJ43koQ | UncommentatedPannen
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCjFqcJQXGZ6T6sxyFB-5i6A | Every Frame a Painting
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCuPgdqQKpq4T4zeqmTelnFg | kaptainkristian
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCSdma21fnJzgmPodhC9SJ3g | NakeyJakey
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UC3XTzVzaHQEd30rQbuvCtTQ | LastWeekTonight
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCJkMlOu7faDgqh4PfzbpLdg | Nerdwriter1
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UChT-l10Pm5m-xOeYOl_37Xw | BriTANicK
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCIgkNLUjfOwy7Z4Ucg0tJyg | Scott Is Struggling
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCEOXxzW2vU0P-0THehuIIeg | Captain Disillusion
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCkVdb9Yr8fc05_VbAVfskCA | Matthew Colville
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCVo63lbKHjC04KqYhwSZ_Pg | Defunctland
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCZzfw1NZ40-RLtRPVSNUHOw | TheEpicNate315
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCqJ-Xo29CKyLTjn6z2XwYAw | Game Maker's Toolkit
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UC3SXZ16R98huyTvFKH2368w | Tangle News
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCuIUGmbCDklkDCDm-cQqv2g | YNAB
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCtUbO6rBht0daVIOGML3c8w | Summoning Salt
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCQ9STd0zeHrrQGJQEuvhuTw | Bismuth
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCBa659QWEk1AI4Tg--mrJ2A | Tom Scott
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCfMJ2MchTSW2kWaT0kK94Yw | William Osman
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCYUOOjT0j8__NMYHijAvNzg | MCDM
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCErSSa3CaP_GJxmFpdjG9Jw | Lessons from the Screenplay
+YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCtHaxi4GTYDpJgMSGy7AeSw | Michael Reeves
