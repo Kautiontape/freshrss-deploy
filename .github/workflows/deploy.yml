@@ -35,6 +35,11 @@ jobs:
           set -e
           DEPLOY_DIR="$HOME/freshrss"
 
+          # Preserve .env across deploys
+          if [ -f "$DEPLOY_DIR/.env" ]; then
+            cp "$DEPLOY_DIR/.env" /tmp/.env.deploy-backup
+          fi
+
           if [ ! -d "$DEPLOY_DIR/.git" ]; then
             rm -rf "$DEPLOY_DIR"
             git clone --recursive https://github.com/shawnsquire/freshrss-deploy.git "$DEPLOY_DIR"
@@ -42,6 +47,10 @@ jobs:
             cd "$DEPLOY_DIR"
             git pull --ff-only
             git submodule update --init --recursive
+          fi
+
+          if [ -f /tmp/.env.deploy-backup ]; then
+            mv /tmp/.env.deploy-backup "$DEPLOY_DIR/.env"
           fi
 
           cd "$DEPLOY_DIR"
