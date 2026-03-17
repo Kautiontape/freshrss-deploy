@@ -9,35 +9,31 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
       - name: Connect to Tailnet
         uses: tailscale/github-action@v3
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           args: --login-server ${{ secrets.HEADSCALE_URL }} --accept-routes
 
-      - name: Deploy via rsync + SSH
-        env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
-        run: |
-          mkdir -p ~/.ssh
-          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -t ed25519 "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            DEPLOY_DIR="$HOME/freshrss"
 
-          rsync -az --delete \
-            --exclude='.git' \
-            --exclude='.github' \
-            --exclude='.env' \
-            --exclude='nohup.out' \
-            -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=accept-new" \
-            ./ "${DEPLOY_USER}@${DEPLOY_HOST}:~/freshrss/"
+            if [ ! -d "$DEPLOY_DIR/.git" ]; then
+              rm -rf "$DEPLOY_DIR"
+              git clone --recursive https://github.com/shawnsquire/freshrss-deploy.git "$DEPLOY_DIR"
+            else
+              cd "$DEPLOY_DIR"
+              git pull --ff-only
+              git submodule update --init --recursive
+            fi
 
-          ssh -i ~/.ssh/deploy_key "${DEPLOY_USER}@${DEPLOY_HOST}" \
-            'cd ~/freshrss && docker compose up -d --remove-orphans && docker compose ps'
+            cd "$DEPLOY_DIR"
+            docker compose up -d --remove-orphans
+            docker compose ps
