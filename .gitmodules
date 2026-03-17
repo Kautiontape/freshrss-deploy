@@ -1,0 +1,3 @@
+[submodule "xExtension-AiAssistant"]
+	path = xExtension-AiAssistant
+	url = git@github.com:shawnsquire/xExtension-AiAssistant.git

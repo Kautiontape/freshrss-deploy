@@ -8,6 +8,7 @@ services:
     volumes:
       - freshrss_data:/var/www/FreshRSS/data
       - freshrss_extensions:/var/www/FreshRSS/extensions
+      - ./xExtension-AiAssistant:/var/www/FreshRSS/extensions/xExtension-AiAssistant:ro
     environment:
       TZ: America/New_York
       CRON_MIN: "*/15"

@@ -3,3 +3,8 @@ __pycache__/
 *.pyc
 .venv/
 digest/.venv/
+nohup.out
+.claude/
+CLAUDE_CODE_INSTRUCTIONS.md
+DEPLOYMENT_SPEC.md
+xExtension-AiScore/
