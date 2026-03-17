@@ -22,7 +22,8 @@ jobs:
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
           # Wait for WireGuard tunnel to establish
-          tailscale ping --c 1 "$DEPLOY_HOST" --timeout 30s
+          tailscale status
+          tailscale ping -c 1 --timeout 30s "$DEPLOY_HOST"
 
           mkdir -p ~/.ssh
           echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
