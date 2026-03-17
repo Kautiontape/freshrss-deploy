@@ -16,25 +16,31 @@ jobs:
           args: --login-server ${{ secrets.HEADSCALE_URL }} --accept-routes
 
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1
-        with:
-          host: ${{ secrets.DEPLOY_HOST }}
-          username: ${{ secrets.DEPLOY_USER }}
-          key: ${{ secrets.DEPLOY_SSH_KEY }}
-          timeout: 60s
-          script: |
-            set -e
-            DEPLOY_DIR="$HOME/freshrss"
+        env:
+          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -t ed25519 "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          SSH="ssh -i ~/.ssh/deploy_key ${DEPLOY_USER}@${DEPLOY_HOST}"
 
-            if [ ! -d "$DEPLOY_DIR/.git" ]; then
-              rm -rf "$DEPLOY_DIR"
-              git clone --recursive https://github.com/shawnsquire/freshrss-deploy.git "$DEPLOY_DIR"
-            else
-              cd "$DEPLOY_DIR"
-              git pull --ff-only
-              git submodule update --init --recursive
-            fi
+          $SSH bash -s <<'SCRIPT'
+          set -e
+          DEPLOY_DIR="$HOME/freshrss"
 
+          if [ ! -d "$DEPLOY_DIR/.git" ]; then
+            rm -rf "$DEPLOY_DIR"
+            git clone --recursive https://github.com/shawnsquire/freshrss-deploy.git "$DEPLOY_DIR"
+          else
             cd "$DEPLOY_DIR"
-            docker compose up -d --remove-orphans
-            docker compose ps
+            git pull --ff-only
+            git submodule update --init --recursive
+          fi
+
+          cd "$DEPLOY_DIR"
+          docker compose up -d --remove-orphans
+          docker compose ps
+          SCRIPT
