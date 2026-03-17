@@ -1,0 +1,39 @@
+name: Deploy to yuffie
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Connect to Tailnet
+        uses: tailscale/github-action@v3
+        with:
+          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
+          args: --login-server ${{ secrets.HEADSCALE_URL }} --accept-routes
+
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            DEPLOY_DIR="$HOME/freshrss"
+
+            if [ ! -d "$DEPLOY_DIR/.git" ]; then
+              rm -rf "$DEPLOY_DIR"
+              git clone --recursive https://github.com/shawnsquire/freshrss-deploy.git "$DEPLOY_DIR"
+            else
+              cd "$DEPLOY_DIR"
+              git pull --ff-only
+              git submodule update --init --recursive
+            fi
+
+            cd "$DEPLOY_DIR"
+            docker compose up -d --remove-orphans
+            docker compose ps
