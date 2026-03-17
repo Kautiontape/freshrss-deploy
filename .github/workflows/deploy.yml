@@ -13,7 +13,7 @@ jobs:
         uses: tailscale/github-action@v3
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-          args: --login-server ${{ secrets.HEADSCALE_URL }} --accept-routes
+          args: --login-server ${{ secrets.HEADSCALE_URL }} --accept-routes --hostname github-deploy
 
       - name: Deploy via SSH
         env:
