@@ -15,6 +15,13 @@ jobs:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
           args: --login-server ${{ secrets.HEADSCALE_URL }} --accept-routes
 
+      - name: Debug Tailnet
+        run: |
+          tailscale status
+          tailscale ip -4
+          ping -c 2 -W 3 192.168.1.112 || echo "LAN ping failed"
+          ping -c 2 -W 3 100.64.0.16 || echo "TS ping failed"
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1
         with:
