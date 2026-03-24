@@ -7,29 +7,14 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, ktn]
     steps:
-      - name: Connect to Tailnet
-        uses: tailscale/github-action@v3
-        with:
-          authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
-          args: --login-server ${{ secrets.HEADSCALE_URL }} --accept-routes --hostname github-deploy
-
       - name: Deploy via SSH
         env:
-          DEPLOY_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          # Wait for WireGuard tunnel to establish
-          tailscale status
-          tailscale ping -c 1 --timeout 30s "$DEPLOY_HOST"
-
-          mkdir -p ~/.ssh
-          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -t ed25519 "$DEPLOY_HOST" >> ~/.ssh/known_hosts 2>/dev/null
-          SSH="ssh -i ~/.ssh/deploy_key ${DEPLOY_USER}@${DEPLOY_HOST}"
+          SSH="ssh ${DEPLOY_USER}@${DEPLOY_HOST}"
 
           $SSH bash -s <<'SCRIPT'
           set -e
