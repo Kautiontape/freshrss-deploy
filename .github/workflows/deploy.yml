@@ -1,4 +1,4 @@
-name: Deploy to yuffie
+name: Deploy to freshrss
 
 on:
   push:
@@ -10,35 +10,12 @@ jobs:
     runs-on: [self-hosted, ktn]
     steps:
       - name: Deploy via SSH
-        env:
-          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
-          DEPLOY_USER: ${{ secrets.DEPLOY_USER }}
         run: |
-          SSH="ssh ${DEPLOY_USER}@${DEPLOY_HOST}"
-
-          $SSH bash -s <<'SCRIPT'
+          ssh shawn@freshrss bash -s <<'SCRIPT'
           set -e
-          DEPLOY_DIR="$HOME/freshrss"
-
-          # Preserve .env across deploys
-          if [ -f "$DEPLOY_DIR/.env" ]; then
-            cp "$DEPLOY_DIR/.env" /tmp/.env.deploy-backup
-          fi
-
-          if [ ! -d "$DEPLOY_DIR/.git" ]; then
-            rm -rf "$DEPLOY_DIR"
-            git clone --recursive https://github.com/Kautiontape/freshrss-deploy.git "$DEPLOY_DIR"
-          else
-            cd "$DEPLOY_DIR"
-            git pull --ff-only
-            git submodule update --init --recursive
-          fi
-
-          if [ -f /tmp/.env.deploy-backup ]; then
-            mv /tmp/.env.deploy-backup "$DEPLOY_DIR/.env"
-          fi
-
-          cd "$DEPLOY_DIR"
+          cd ~/freshrss
+          git pull --ff-only
+          git submodule update --init --recursive
           docker compose up -d --remove-orphans
           docker compose ps
           SCRIPT
