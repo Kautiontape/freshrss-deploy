@@ -27,7 +27,7 @@ jobs:
 
           if [ ! -d "$DEPLOY_DIR/.git" ]; then
             rm -rf "$DEPLOY_DIR"
-            git clone --recursive https://github.com/shawnsquire/freshrss-deploy.git "$DEPLOY_DIR"
+            git clone --recursive https://github.com/Kautiontape/freshrss-deploy.git "$DEPLOY_DIR"
           else
             cd "$DEPLOY_DIR"
             git pull --ff-only
