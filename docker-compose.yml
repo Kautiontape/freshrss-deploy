@@ -43,6 +43,13 @@ services:
     networks:
       - newsletter
 
+  youtube-helper:
+    build: ./youtube-helper
+    container_name: youtube-helper
+    restart: unless-stopped
+    networks:
+      - newsletter
+
   digest:
     build: ./digest
     container_name: digest
