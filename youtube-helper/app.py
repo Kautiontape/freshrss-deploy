@@ -10,8 +10,8 @@ SHORT_THRESHOLD = 60  # seconds
 TRANSCRIPT_MAX_CHARS = 10_000
 
 
-def _get_duration(video_id: str) -> int | None:
-    """Return video duration in seconds using yt-dlp, or None on failure."""
+def _get_video_metadata(video_id: str) -> dict | None:
+    """Return video metadata dict using yt-dlp, or None on failure."""
     try:
         import yt_dlp
 
@@ -20,10 +20,25 @@ def _get_duration(video_id: str) -> int | None:
             info = ydl.extract_info(
                 f"https://www.youtube.com/watch?v={video_id}", download=False
             )
-            return int(info.get("duration") or 0)
+            return {
+                "duration": int(info.get("duration") or 0),
+                "webpage_url": info.get("webpage_url", ""),
+                "original_url": info.get("original_url", ""),
+            }
     except Exception as e:
         log.warning("yt-dlp failed for %s: %s", video_id, e)
         return None
+
+
+def _is_short(metadata: dict) -> bool:
+    """Determine if a video is a YouTube Short from yt-dlp metadata."""
+    # Primary: yt-dlp resolves the real URL which contains /shorts/ for Shorts
+    for url_field in ("webpage_url", "original_url"):
+        if "/shorts/" in metadata.get(url_field, ""):
+            return True
+    # Fallback: duration-based heuristic
+    duration = metadata.get("duration")
+    return duration is not None and duration < SHORT_THRESHOLD
 
 
 def _get_transcript(video_id: str) -> tuple[str | None, str | None]:
@@ -47,8 +62,9 @@ def video_info():
     if not video_id:
         return jsonify({"error": "Missing ?v= parameter"}), 400
 
-    duration = _get_duration(video_id)
-    is_short = duration is not None and duration < SHORT_THRESHOLD
+    metadata = _get_video_metadata(video_id)
+    duration = metadata["duration"] if metadata else None
+    is_short = _is_short(metadata) if metadata else False
 
     transcript = None
     language = None
@@ -63,6 +79,40 @@ def video_info():
             "transcript": transcript,
             "language": language,
             "error": None,
+        }
+    )
+
+
+@app.route("/test-short")
+def test_short():
+    """Diagnostic endpoint showing how Shorts detection works for a video."""
+    video_id = request.args.get("v", "").strip()
+    if not video_id:
+        return jsonify({"error": "Missing ?v= parameter"}), 400
+
+    metadata = _get_video_metadata(video_id)
+    if not metadata:
+        return jsonify({"video_id": video_id, "error": "yt-dlp metadata fetch failed"})
+
+    url_match = any(
+        "/shorts/" in metadata.get(f, "") for f in ("webpage_url", "original_url")
+    )
+    duration_match = (
+        metadata["duration"] is not None and metadata["duration"] < SHORT_THRESHOLD
+    )
+
+    return jsonify(
+        {
+            "video_id": video_id,
+            "is_short": _is_short(metadata),
+            "detection": {
+                "url_match": url_match,
+                "duration_match": duration_match,
+                "webpage_url": metadata.get("webpage_url", ""),
+                "original_url": metadata.get("original_url", ""),
+                "duration": metadata["duration"],
+                "threshold": SHORT_THRESHOLD,
+            },
         }
     )
 

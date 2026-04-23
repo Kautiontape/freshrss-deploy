@@ -1,0 +1,1 @@
+*/5 * * * * www-data php /var/www/FreshRSS/extensions/xExtension-AiAssistant/score-pending.php >> /var/log/ai-scoring.log 2>&1
