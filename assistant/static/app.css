@@ -68,6 +68,8 @@ th.num { text-align: right; }
 #chat-view { display: flex; flex-direction: column; height: calc(100vh - 40px); max-width: 900px; margin: 0 auto; }
 .chat-head { display: flex; gap: 10px; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
 .chat-head h1 { font-size: 17px; margin: 0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chat-head .back-link { text-decoration: none; font-size: 22px; line-height: 1; padding: 0 6px; color: var(--muted); }
+.chat-head .back-link:hover { color: var(--text); }
 #messages { flex: 1; overflow: auto; padding: 16px 4px; display: flex; flex-direction: column; gap: 12px; }
 .msg { max-width: 92%; padding: 10px 14px; border-radius: 12px; line-height: 1.55; }
 .msg.user { align-self: flex-end; background: var(--user); white-space: pre-wrap; }
@@ -85,11 +87,15 @@ details.thinking summary { cursor: pointer; }
 details.thinking div { white-space: pre-wrap; padding: 6px 10px; }
 .status-line { font-size: 12px; color: var(--muted); font-style: italic; padding: 0 10px; }
 #composer { display: flex; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border); align-items: flex-end; }
-#composer textarea { flex: 1; resize: none; min-height: 44px; max-height: 200px; }
+#composer textarea { flex: 1; resize: none; line-height: 22px; min-height: 40px; overflow-y: hidden; }
 .quick { display: flex; gap: 6px; flex-wrap: wrap; padding: 8px 0 0; }
 .quick button { font-size: 12px; padding: 4px 10px; border-radius: 14px; }
 .empty { text-align: center; color: var(--muted); padding: 60px 20px; }
 .empty h2 { color: var(--text); }
+
+/* History */
+.chat-history .chat-row { grid-template-columns: 64px 1fr auto; }
+.chat-history .tag:empty { visibility: hidden; }
 
 /* Reader */
 .entry { display: grid; grid-template-columns: 40px 1fr auto; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); align-items: start; }
@@ -126,9 +132,15 @@ details.thinking div { white-space: pre-wrap; padding: 6px 10px; }
 @media (max-width: 760px) {
   #app { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
   #sidebar { flex-direction: row; align-items: center; flex-wrap: wrap; border-right: none; border-bottom: 1px solid var(--border); padding: 8px 12px; }
-  #sidebar nav { flex-direction: row; }
+  #sidebar nav { flex-direction: row; flex-wrap: wrap; gap: 0; }
+  #sidebar nav a { padding: 6px 8px; font-size: 14px; }
+  .brand { font-size: 15px; }
+  .brand span:last-child { display: none; }
   #chat-list-wrap, #status-bar { display: none; }
   #main { padding: 12px 16px; }
-  #chat-view { height: calc(100vh - 80px); }
+  #chat-view { height: 100%; min-height: 0; }
+  #composer textarea { font-size: 16px; }
+  .chat-history .chat-row { grid-template-columns: 1fr auto; }
+  .chat-history .chat-row .tag { display: none; }
   .form-grid, .settings-grid { grid-template-columns: 1fr; }
 }

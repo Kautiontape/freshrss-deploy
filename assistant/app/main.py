@@ -308,8 +308,9 @@ class MessageBody(BaseModel):
 
 
 @app.get("/api/chats", dependencies=[Depends(require_ui)])
-def chats():
-    return {"chats": chat.list_chats()}
+def chats(all: bool = False, limit: int = 50):
+    """Sidebar list by default; `all=1` also returns chats started from the FreshRSS Chat button."""
+    return {"chats": chat.list_chats(limit=max(1, min(limit, 500)), include_entry=all)}
 
 
 @app.post("/api/chats", dependencies=[Depends(require_ui)])

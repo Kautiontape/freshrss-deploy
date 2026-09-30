@@ -288,9 +288,13 @@ def find_entry_chat(entry_id: str) -> dict | None:
     return dict(row) if row else None
 
 
-def list_chats(limit: int = 50, context_type: str | None = None) -> list[dict]:
+def list_chats(limit: int = 50, context_type: str | None = None, include_entry: bool = False) -> list[dict]:
+    """Chats newest first. Entry chats (opened from the FreshRSS Chat button) are left out
+    of the sidebar unless asked for, but they are ordinary chats stored like any other."""
     if context_type:
         rows = db.fetch_all("SELECT * FROM ai.chats WHERE context_type = %s ORDER BY updated_at DESC LIMIT %s", (context_type, limit))
+    elif include_entry:
+        rows = db.fetch_all("SELECT * FROM ai.chats ORDER BY updated_at DESC LIMIT %s", (limit,))
     else:
         rows = db.fetch_all("SELECT * FROM ai.chats WHERE context_type <> 'entry' ORDER BY updated_at DESC LIMIT %s", (limit,))
     return [dict(r) for r in rows]

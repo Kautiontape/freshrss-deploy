@@ -86,6 +86,7 @@
     document.querySelectorAll("#sidebar nav a").forEach((a) => a.classList.toggle("active", a.dataset.nav === parts[0]));
     const main = $("#main"); main.innerHTML = "";
     if (parts[0] === "chat") return parts[1] ? viewChat(Number(parts[1])) : viewChatNew();
+    if (parts[0] === "chats") return viewChats();
     if (parts[0] === "reader") return viewReader();
     if (parts[0] === "briefs") {
       if (parts[1] === "new") return viewBriefForm(null);
@@ -105,6 +106,33 @@
     ["Zvi this week", "Find Zvi's posts from the last 7 days, read them, and give me the key theses and the two or three strongest points from each."],
     ["Clear the noise", "Find unread entries scored 3 or lower from the last 30 days, list a sample so I can sanity check, and ask me whether to mark all of them as read."],
   ];
+
+  // One-line composer that grows with the text, up to five lines.
+  function autogrow(ta) {
+    const fit = () => {
+      const cs = getComputedStyle(ta);
+      const line = parseFloat(cs.lineHeight) || 22;
+      const border = (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0);
+      const max = line * 5 + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0) + border;
+      ta.style.height = "auto";
+      const wanted = ta.scrollHeight + border;
+      ta.style.height = Math.min(wanted, max) + "px";
+      ta.style.overflowY = wanted > max ? "auto" : "hidden";
+    };
+    ta.rows = 1;
+    ta.addEventListener("input", fit);
+    fit();
+    return fit;
+  }
+
+  // Follow new content only while the reader is already at the bottom.
+  function stickyScroll(box) {
+    let stick = true;
+    box.addEventListener("scroll", () => { stick = box.scrollHeight - box.scrollTop - box.clientHeight < 40; });
+    return { scroll: () => { if (stick) box.scrollTop = box.scrollHeight; }, reset: () => { stick = true; box.scrollTop = box.scrollHeight; } };
+  }
+
+  const CONTEXT_LABEL = { entry: "article", brief: "brief", general: "" };
 
   function modelSelect(current, cls) {
     const s = el("select", { class: cls || "" });
@@ -128,7 +156,7 @@
     const empty = el("div", { class: "empty" }, [el("h2", null, "Chat with your news"),
       el("p", null, "Ask about anything in your feeds. The assistant can search and read entries, mark them read, and update your interests.")]);
     const quick = el("div", { class: "quick" });
-    const ta = el("textarea", { placeholder: "Ask about your news… (Enter to send, Shift+Enter for newline)", rows: 2 });
+    const ta = el("textarea", { placeholder: "Ask about your news… (Enter to send, Shift+Enter for newline)" });
     const send = el("button", { class: "primary" }, "Send");
     const composer = el("div", { id: "composer" }, [ta, send]);
     const start = async (text) => {
@@ -141,7 +169,7 @@
     for (const [label, text] of QUICK) quick.append(el("button", { onclick: () => start(text) }, label));
     send.addEventListener("click", () => start(ta.value));
     ta.addEventListener("keydown", (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); start(ta.value); } });
-    wrap.append(head, empty, quick, composer); main.append(wrap); ta.focus();
+    wrap.append(head, empty, quick, composer); main.append(wrap); autogrow(ta); ta.focus();
   }
 
   async function viewChat(id) {
@@ -152,24 +180,28 @@
     const wrap = el("div", { id: "chat-view" });
     const title = el("h1", null, data.chat.title);
     const mSel = modelSelect(data.chat.model), eSel = effortSelect(data.chat.effort);
-    const head = el("div", { class: "chat-head" }, [title, mSel, eSel]);
+    const head = el("div", { class: "chat-head" }, [el("a", { href: "#/chats", class: "back-link", title: "All chats" }, "‹"), title, mSel, eSel]);
     if (data.chat.context_type === "brief") head.append(el("a", { href: "#/briefs/" + data.chat.context_id, class: "small" }, "view brief"));
+    if (data.chat.context_type === "entry") head.append(el("span", { class: "tag", title: "Started from the Chat button on an article in FreshRSS" }, "article chat"));
     const messages = el("div", { id: "messages" });
-    const ta = el("textarea", { placeholder: "Message… (Enter to send)", rows: 2 });
+    const ta = el("textarea", { placeholder: "Message… (Enter to send)" });
     const send = el("button", { class: "primary" }, "Send");
     const composer = el("div", { id: "composer" }, [ta, send]);
     wrap.append(head, messages, composer); main.append(wrap);
+    const fitTa = autogrow(ta);
 
     for (const m of data.messages) renderStoredMessage(messages, m);
-    messages.scrollTop = messages.scrollHeight;
+    const sticky = stickyScroll(messages);
+    sticky.reset();
 
     const doSend = async (text) => {
       text = (text || "").trim(); if (!text || state.streaming) return;
-      ta.value = ""; send.disabled = true; state.streaming = true;
+      ta.value = ""; fitTa(); send.disabled = true; state.streaming = true;
       messages.append(el("div", { class: "msg user" }, text));
+      sticky.reset();
       let current = null, buf = "", thinkEl = null, statusEl = null;
       const ensureMsg = () => { if (!current) { current = el("div", { class: "msg assistant" }); messages.append(current); } return current; };
-      const scroll = () => { messages.scrollTop = messages.scrollHeight; };
+      const scroll = sticky.scroll;
       try {
         await sseStream("/api/chats/" + id + "/message", { text, model: mSel.value, effort: eSel.value }, (ev) => {
           if (statusEl && ev.type !== "status") { statusEl.remove(); statusEl = null; }
@@ -222,6 +254,37 @@
       else if (b.type === "thinking" && b.text.trim()) container.append(el("details", { class: "thinking" }, [el("summary", null, "Thinking"), el("div", null, b.text)]));
       else if (b.type === "tool_use") container.append(el("div", { class: "tool-line" }, [el("span", { class: "name" }, b.name), el("span", { class: "muted" }, summarizeInput(b.input))]));
     }
+  }
+
+  // ── History: every chat, including the ones started from FreshRSS ──────
+  async function viewChats() {
+    state.currentChat = null; refreshChats();
+    const main = $("#main");
+    const data = await api("/api/chats?all=1&limit=300");
+    const q = el("input", { type: "search", placeholder: "Search titles…" });
+    const kind = el("select", null, [["", "All chats"], ["general", "Chats"], ["entry", "Article chats"], ["brief", "Brief chats"]].map(([v, l]) => el("option", { value: v }, l)));
+    const list = el("div", { class: "chat-history" });
+    const page = el("div", { class: "page" }, [
+      el("div", { class: "row" }, [el("h1", { class: "grow" }, "History"), el("a", { href: "#/chat" }, el("button", { class: "primary" }, "New chat"))]),
+      el("div", { class: "small muted", style: "margin-bottom:10px" }, "Chats are stored on the server, so anything started on another device, or from the Chat button in FreshRSS, shows up here."),
+      el("div", { class: "filters" }, [q, kind]), list]);
+    const draw = () => {
+      const needle = q.value.trim().toLowerCase();
+      const rows = data.chats.filter((c) => (!kind.value || c.context_type === kind.value) && (!needle || (c.title || "").toLowerCase().includes(needle)));
+      list.innerHTML = "";
+      if (!rows.length) { list.append(el("div", { class: "empty" }, "No chats yet.")); return; }
+      for (const c of rows) {
+        const del = el("button", { class: "mini danger", title: "Delete" }, "×");
+        del.addEventListener("click", async () => { if (!confirm("Delete this chat?")) return; await api("/api/chats/" + c.id, { method: "DELETE" }); data.chats = data.chats.filter((x) => x.id !== c.id); draw(); refreshChats(); });
+        list.append(el("div", { class: "entry chat-row" }, [
+          el("span", { class: "tag" }, CONTEXT_LABEL[c.context_type] ?? c.context_type),
+          el("div", null, [el("a", { class: "title", href: "#/chat/" + c.id }, c.title || "Untitled"),
+            el("div", { class: "meta" }, `${fmtDate(c.updated_at)} · ${(c.model || "").replace("claude-", "")}`)]),
+          del]));
+      }
+    };
+    q.addEventListener("input", draw); kind.addEventListener("change", draw);
+    main.append(page); draw();
   }
 
   // ── Reader ─────────────────────────────────────────────────────────────
