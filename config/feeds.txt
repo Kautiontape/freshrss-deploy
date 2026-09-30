@@ -62,7 +62,6 @@ YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCIgkNLUjfOwy7Z4Uc
 YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCEOXxzW2vU0P-0THehuIIeg | Captain Disillusion
 YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCkVdb9Yr8fc05_VbAVfskCA | Matthew Colville
 YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCVo63lbKHjC04KqYhwSZ_Pg | Defunctland
-YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCZzfw1NZ40-RLtRPVSNUHOw | TheEpicNate315
 YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCqJ-Xo29CKyLTjn6z2XwYAw | Game Maker's Toolkit
 YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UC3SXZ16R98huyTvFKH2368w | Tangle News
 YouTube | https://www.youtube.com/feeds/videos.xml?channel_id=UCuIUGmbCDklkDCDm-cQqv2g | YNAB

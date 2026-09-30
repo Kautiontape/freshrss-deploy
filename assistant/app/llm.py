@@ -15,13 +15,15 @@ log = logging.getLogger(__name__)
 
 # Model catalog: id -> (label, input $/MTok, output $/MTok, cache read $/MTok, cache write $/MTok)
 MODELS: dict[str, dict[str, Any]] = {
+    "claude-opus-5-5": {"label": "Claude Opus 5.5", "in": 4.0, "out": 20.0, "cache_read": 0.2, "cache_write": 5.0},
+    "claude-sonnet-5-5": {"label": "Claude Sonnet 5.5", "in": 2.0, "out": 10.0, "cache_read": 0.2, "cache_write": 2.5},
     "claude-opus-5": {"label": "Claude Opus 5", "in": 5.0, "out": 25.0, "cache_read": 0.5, "cache_write": 6.25},
     "claude-sonnet-5": {"label": "Claude Sonnet 5", "in": 2.0, "out": 10.0, "cache_read": 0.2, "cache_write": 2.5},
     "claude-haiku-4-5": {"label": "Claude Haiku 4.5", "in": 1.0, "out": 5.0, "cache_read": 0.1, "cache_write": 1.25},
     "claude-fable-5-1": {"label": "Claude Fable 5.1 (most capable, $10/$50)", "in": 10.0, "out": 50.0, "cache_read": 0.25, "cache_write": 12.5},
 }
 EFFORTS = ["low", "medium", "high", "xhigh", "max"]
-DEFAULT_MODEL = "claude-opus-5"
+DEFAULT_MODEL = "claude-opus-5-5"
 
 _client: anthropic.Anthropic | None = None
 _lock = threading.Lock()

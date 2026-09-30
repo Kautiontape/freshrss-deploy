@@ -96,6 +96,27 @@ def logout(response: Response):
     return {"ok": True}
 
 
+@app.get("/sso")
+def sso(ts: str = "", sig: str = "", next: str = "#/chat"):
+    """Sign-in from FreshRSS: HMAC-SHA256 over 'sso:<ts>' with the shared internal token, valid 5 minutes."""
+    from fastapi.responses import RedirectResponse
+    target = next if next.startswith("#/") else "#/chat"
+    resp = RedirectResponse(url="/" + target, status_code=303)
+    if not settings.ui_password:
+        return resp
+    try:
+        age = abs(time.time() - int(ts))
+    except ValueError:
+        raise HTTPException(400, "bad timestamp")
+    if not settings.internal_token or age > 300:
+        raise HTTPException(403, "sign-in link expired")
+    expected = hmac.new(settings.internal_token.encode(), f"sso:{ts}".encode(), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(sig, expected):
+        raise HTTPException(403, "bad signature")
+    resp.set_cookie(COOKIE, _session_token(), httponly=True, samesite="lax", max_age=60 * 60 * 24 * 90)
+    return resp
+
+
 # ── Static UI ───────────────────────────────────────────────────────────────
 
 @app.get("/")

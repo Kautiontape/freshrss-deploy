@@ -165,7 +165,7 @@ def run_brief(brief_id: int, *, force_window_hours: int | None = None, stream_cb
     if not brief:
         raise ValueError("brief not found")
     cfg = db.get_all_settings()
-    model = llm.valid_model(brief["model"] or cfg["brief_model"], "claude-opus-5")
+    model = llm.valid_model(brief["model"] or cfg["brief_model"], "claude-opus-5-5")
     effort = llm.valid_effort(brief["effort"] or cfg["brief_effort"], "high")
 
     now = datetime.now(timezone.utc)

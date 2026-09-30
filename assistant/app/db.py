@@ -166,13 +166,13 @@ def migrate() -> None:
 
 DEFAULT_SETTINGS: dict[str, Any] = {
     "interest_profile": "",
-    "scoring_model": "claude-sonnet-5",
+    "scoring_model": "claude-sonnet-5-5",
     "scoring_effort": "low",
-    "summary_model": "claude-opus-5",
+    "summary_model": "claude-opus-5-5",
     "summary_effort": "low",
-    "chat_model": "claude-opus-5",
+    "chat_model": "claude-opus-5-5",
     "chat_effort": "high",
-    "brief_model": "claude-opus-5",
+    "brief_model": "claude-opus-5-5",
     "brief_effort": "high",
     "summary_threshold": 7,
     "score_lookback_days": 180,

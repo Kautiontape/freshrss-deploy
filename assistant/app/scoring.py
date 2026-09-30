@@ -170,7 +170,7 @@ def score_batch(entries: list[Entry], *, model: str | None = None, effort: str |
     if not entries:
         return {}
     cfg = db.get_all_settings()
-    model = llm.valid_model(model or cfg["scoring_model"], "claude-sonnet-5")
+    model = llm.valid_model(model or cfg["scoring_model"], "claude-sonnet-5-5")
     effort = llm.valid_effort(effort or cfg["scoring_effort"], "low")
     items = _score_items_payload(entries)
     topics = [str(t).strip() for t in (cfg.get("topic_tags") or []) if str(t).strip()]
@@ -328,7 +328,7 @@ def _summary_call(system_tpl: str, user_tpl: str, entry: Entry, *, model: str, e
 
 def summarize_entry(entry: Entry, *, stream_cb=None, rules: dict | None = None) -> str:
     cfg = db.get_all_settings()
-    model = llm.valid_model(cfg["summary_model"], "claude-opus-5")
+    model = llm.valid_model(cfg["summary_model"], "claude-opus-5-5")
     effort = llm.valid_effort(cfg["summary_effort"], "low")
     summary = _summary_call(prompts.SUMMARY_SYSTEM, prompts.SUMMARY_USER, entry, model=model, effort=effort,
                             max_tokens=2000, content_chars=SUMMARY_CONTENT_CHARS, purpose="summary", rules=rules,
@@ -343,7 +343,7 @@ def summarize_entry(entry: Entry, *, stream_cb=None, rules: dict | None = None) 
 
 def detail_entry(entry: Entry, *, stream_cb=None, rules: dict | None = None) -> str:
     cfg = db.get_all_settings()
-    model = llm.valid_model(cfg["summary_model"], "claude-opus-5")
+    model = llm.valid_model(cfg["summary_model"], "claude-opus-5-5")
     effort = llm.valid_effort(cfg["summary_effort"], "low")
     detail = _summary_call(prompts.DETAIL_SYSTEM, prompts.DETAIL_USER, entry, model=model, effort=effort,
                            max_tokens=4000, content_chars=SUMMARY_CONTENT_CHARS, purpose="detail", rules=rules,
@@ -432,7 +432,7 @@ def enrich_pass(limit: int = 25) -> int:
 
 def apply_feedback(entry: Entry, direction: str, reason: str = "") -> str:
     cfg = db.get_all_settings()
-    model = llm.valid_model(cfg["summary_model"], "claude-opus-5")
+    model = llm.valid_model(cfg["summary_model"], "claude-opus-5-5")
     profile = (db.get_setting("interest_profile") or "").strip()
     user = prompts.FEEDBACK_USER.format(
         profile=profile, direction="MORE" if direction == "more" else "FEWER", title=entry.title,

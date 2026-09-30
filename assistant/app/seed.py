@@ -47,6 +47,23 @@ def seed_rules() -> bool:
     return n > 0
 
 
+MODEL_UPGRADES = {"claude-opus-5": "claude-opus-5-5", "claude-sonnet-5": "claude-sonnet-5-5"}
+
+
+def upgrade_models() -> None:
+    """Move saved model settings from the 5 generation to 5.5 (same price or cheaper, newer)."""
+    for key in ("scoring_model", "summary_model", "chat_model", "brief_model"):
+        row = db.fetch_one("SELECT value FROM ai.settings WHERE key = %s", (key,))
+        if row and row["value"] in MODEL_UPGRADES:
+            db.set_setting(key, MODEL_UPGRADES[row["value"]])
+            log.info("upgraded %s to %s", key, MODEL_UPGRADES[row["value"]])
+    db.execute("UPDATE ai.chats SET model = %s WHERE model = %s", ("claude-opus-5-5", "claude-opus-5"))
+    db.execute("UPDATE ai.chats SET model = %s WHERE model = %s", ("claude-sonnet-5-5", "claude-sonnet-5"))
+    db.execute("UPDATE ai.briefs SET model = %s WHERE model = %s", ("claude-opus-5-5", "claude-opus-5"))
+    db.execute("UPDATE ai.briefs SET model = %s WHERE model = %s", ("claude-sonnet-5-5", "claude-sonnet-5"))
+
+
 def run() -> None:
     seed_profile()
     seed_rules()
+    upgrade_models()

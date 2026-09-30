@@ -33,7 +33,9 @@ cp .env.example .env    # fill in POSTGRES_PASSWORD, ANTHROPIC_API_KEY, ASSISTAN
 docker compose up -d --build
 ```
 
-Then open FreshRSS on :8080 (enable the *AI Assistant* extension) and the assistant on :8081.
+Then open FreshRSS on :8080 and enable the *AI Assistant* extension. A **✨ Assistant** button appears
+in the top bar: it opens the assistant UI inside FreshRSS (signed in automatically). The UI is also
+reachable directly on :8081 with `ASSISTANT_PASSWORD`.
 The assistant seeds its interest profile from `config/interest-profile.md` and default
 feed rules on first run; change both in the assistant's Settings page afterwards.
 
@@ -42,7 +44,8 @@ feed rules on first run; change both in the assistant's Settings page afterwards
 - Every 2 minutes the worker looks for entries in scoring-enabled feeds/categories that
   have no score yet (unread entries, or anything newer than `score_lookback_days`).
 - Entries are scored in batches of 10 with structured output (score 1-10, reason,
-  one-line gist, topic tags). Results are stored in the entry `attributes` JSON, which
+  one-line gist, topic tags) by Sonnet 5.5; summaries, briefs and chat use Opus 5.5 by default.
+  Models and effort are per-purpose settings in the UI; spend is logged per call. Results are stored in the entry `attributes` JSON, which
   the extension renders as a badge + summary in the reader.
 - Entries scoring at or above the summary threshold (or in feeds flagged *Summarize*)
   get a full summary from the whole text (fetched article / transcript).
@@ -55,6 +58,14 @@ feed rules on first run; change both in the assistant's Settings page afterwards
 A brief is a scheduled briefing over a set of feeds or categories (for example a daily
 Zvi brief at 6:30). Each run covers everything since the previous run, is stored in the
 assistant, can be emailed, and can be opened as a chat ("Chat about this brief").
+
+## YouTube feeds
+
+YouTube's feed endpoint answers sporadic 404s when many channel feeds are fetched in a burst, and
+FreshRSS flags a feed as failing after a single miss. The YouTube feeds are therefore given
+staggered per-feed refresh intervals (2 to 3.75 hours) so they are not all fetched at once. If a
+YouTube feed shows the error marker, check the FreshRSS log for the status code before assuming
+the channel id is wrong.
 
 ## Deployment
 
