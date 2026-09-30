@@ -8,3 +8,4 @@ nohup.out
 CLAUDE_CODE_INSTRUCTIONS.md
 DEPLOYMENT_SPEC.md
 xExtension-AiScore/
+.playwright-mcp/
