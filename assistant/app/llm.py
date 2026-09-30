@@ -37,6 +37,12 @@ def client() -> anthropic.Anthropic:
         return _client
 
 
+def api(model: str):
+    """Messages resource for a model: Fable needs the beta surface (server-side fallbacks)."""
+    c = client()
+    return c.beta.messages if model == "claude-fable-5-1" else c.messages
+
+
 def valid_model(model: str | None, fallback: str = DEFAULT_MODEL) -> str:
     return model if model in MODELS else fallback
 

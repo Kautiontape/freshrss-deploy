@@ -432,7 +432,7 @@ def run_turn(chat_id: int, user_text: str, *, model: str | None = None, effort: 
     purpose = "chat_entry" if chat["context_type"] == "entry" else "chat"
     for _ in range(MAX_TOOL_ITERATIONS):
         try:
-            with llm.client().messages.stream(
+            with llm.api(model).stream(
                 model=model, max_tokens=16000, system=system, messages=history, tools=tools,
                 cache_control={"type": "ephemeral"},
                 **llm.thinking_params(model, effort, display="summarized"),

@@ -395,9 +395,9 @@
       el("label", null, "Summaries / details / feedback"), el("div", { class: "row" }, [mod("summary_model"), eff("summary_effort")]),
       el("label", null, "Chat default"), el("div", { class: "row" }, [mod("chat_model"), eff("chat_effort")]),
       el("label", null, "Briefs default"), el("div", { class: "row" }, [mod("brief_model"), eff("brief_effort")]),
-      el("label", null, "Full summary at score ≥"), el("div", { class: "row" }, [num("summary_threshold", 70), el("span", { class: "small muted" }, "every scored entry gets a one-line gist; this threshold (or a feed's Summarize flag) triggers a full summary")]),
+      el("label", null, "Full summary at score ≥"), el("div", { class: "row" }, [num("summary_threshold", 70), el("span", { class: "small muted" }, "every scored entry gets a one-line gist; entries at or above this score get a full Opus summary. Feeds flagged Summarize get one from a medium score up.")]),
       el("label", null, "Score entries newer than (days)"), el("div", { class: "row" }, [num("score_lookback_days"), el("span", { class: "small muted" }, "unread entries are always scored")]),
-      el("label", null, "Full summaries newer than (days)"), num("summary_lookback_days"),
+      el("label", null, "Full summaries newer than (days)"), el("div", { class: "row" }, [num("summary_lookback_days"), el("span", { class: "small muted" }, "older entries get a full summary on demand (Full summary button, chat, briefs)")]),
       el("label", null, "YouTube enrichment newer than (days)"), el("div", { class: "row" }, [num("enrich_lookback_days"), el("span", { class: "small muted" }, "Shorts detection + transcripts")]),
       el("label", null, "Mark Shorts as read"), chk("mark_shorts_read"),
       el("label", null, "Write FreshRSS labels"), el("div", { class: "row" }, [chk("write_labels"), el("span", { class: "small muted" }, "AI: High / Medium / Low labels in the FreshRSS sidebar")]),
@@ -440,7 +440,7 @@
     });
     const rescore = el("button", { class: "danger" }, "Clear scores & rescore unread (90 days)");
     rescore.addEventListener("click", async () => { if (!confirm("Clear AI scores/summaries on unread entries from the last 90 days so they get rescored? This costs API credits.")) return; const r = await api("/api/rescore", { method: "POST", body: { since_days: 90, unread_only: true } }); rulesMsg.textContent = `Cleared ${r.cleared} entries; worker kicked.`; refreshStatus(); });
-    page.append(el("div", { class: "card" }, [el("h2", { style: "margin-top:0" }, "Feed rules"), el("div", { class: "small muted", style: "margin-bottom:8px" }, "Category rules apply to every feed in the category. Score = relevance scoring + gist. Summarize = always write a full summary. Fetch full = fetch the article page when the feed only has an excerpt."), tbl, el("div", { class: "row", style: "margin-top:10px" }, [saveRules, rulesMsg, el("span", { class: "grow" }), rescore])]));
+    page.append(el("div", { class: "card" }, [el("h2", { style: "margin-top:0" }, "Feed rules"), el("div", { class: "small muted", style: "margin-bottom:8px" }, "Category rules apply to every feed in the category. Score = relevance scoring + one-line gist + labels. Summarize = full summary for anything scoring medium or better (not just high). Fetch full = fetch the article page when the feed only has an excerpt."), tbl, el("div", { class: "row", style: "margin-top:10px" }, [saveRules, rulesMsg, el("span", { class: "grow" }), rescore])]));
 
     // Usage
     const ut = el("table"); ut.append(el("thead", null, el("tr", null, [el("th", null, "Purpose"), el("th", null, "Model"), el("th", { class: "num" }, "Calls"), el("th", { class: "num" }, "Input"), el("th", { class: "num" }, "Cache read"), el("th", { class: "num" }, "Output"), el("th", { class: "num" }, "Cost")])));

@@ -223,12 +223,17 @@ def count_entries(*, unread_only: bool = False, since_ts: int | None = None, uns
 
 # ── Attribute writes (atomic merge) ─────────────────────────────────────────
 
+# FreshRSS stores an empty attribute set as '[]' (PHP json_encode of []); only
+# treat a JSON object as existing attributes, everything else starts from {}.
+_ATTR_OBJ = ("(CASE WHEN jsonb_typeof(COALESCE(NULLIF(attributes, ''), '{}')::jsonb) = 'object' "
+             "THEN COALESCE(NULLIF(attributes, ''), '{}')::jsonb ELSE '{}'::jsonb END)")
+
 def merge_attributes(entry_id: int | str, values: dict[str, Any]) -> None:
     """Merge keys into the entry's attributes JSON without touching other keys."""
     db.execute(
         f"""
         UPDATE {T_ENTRY}
-        SET attributes = (COALESCE(NULLIF(attributes, ''), '{{}}')::jsonb || %s::jsonb)::text
+        SET attributes = ({_ATTR_OBJ} || %s::jsonb)::text
         WHERE id = %s
         """,
         (Jsonb(values), int(entry_id)),
@@ -239,7 +244,7 @@ def remove_attributes(entry_id: int | str, keys: Iterable[str]) -> None:
     db.execute(
         f"""
         UPDATE {T_ENTRY}
-        SET attributes = (COALESCE(NULLIF(attributes, ''), '{{}}')::jsonb - %s::text[])::text
+        SET attributes = ({_ATTR_OBJ} - %s::text[])::text
         WHERE id = %s
         """,
         (list(keys), int(entry_id)),
@@ -250,12 +255,12 @@ def clear_ai_attributes(entry_ids: Iterable[int | str] | None = None, keys: Iter
     ks = list(keys)
     if entry_ids is None:
         return db.execute(
-            f"UPDATE {T_ENTRY} SET attributes = (COALESCE(NULLIF(attributes, ''), '{{}}')::jsonb - %s::text[])::text WHERE attributes LIKE '%%\"ai_score\"%%'",
+            f"UPDATE {T_ENTRY} SET attributes = ({_ATTR_OBJ} - %s::text[])::text WHERE attributes LIKE '%%\"ai_score\"%%'",
             (ks,),
         )
     ids = [int(i) for i in entry_ids]
     return db.execute(
-        f"UPDATE {T_ENTRY} SET attributes = (COALESCE(NULLIF(attributes, ''), '{{}}')::jsonb - %s::text[])::text WHERE id = ANY(%s)",
+        f"UPDATE {T_ENTRY} SET attributes = ({_ATTR_OBJ} - %s::text[])::text WHERE id = ANY(%s)",
         (ks, ids),
     )
 

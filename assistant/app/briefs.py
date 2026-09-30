@@ -199,7 +199,7 @@ def run_brief(brief_id: int, *, force_window_hours: int | None = None, stream_cb
             profile=(db.get_setting("interest_profile") or "").strip(), instructions=brief["instructions"] or "(none)"),
             "cache_control": {"type": "ephemeral"}}]
         user = prompts.BRIEF_USER.format(name=brief["name"], period=period, n=len(entries), items=_items_text(entries, rules))
-        with llm.client().messages.stream(
+        with llm.api(model).stream(
             model=model, max_tokens=16000, system=system, messages=[{"role": "user", "content": user}],
             **llm.thinking_params(model, effort), **llm.fallback_params(model),
         ) as stream:

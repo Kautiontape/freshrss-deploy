@@ -178,7 +178,7 @@ def score_batch(entries: list[Entry], *, model: str | None = None, effort: str |
                "cache_control": {"type": "ephemeral"}}]
     user = prompts.SCORING_USER.format(n=len(items), items=json.dumps(items, ensure_ascii=False, indent=1))
 
-    resp = llm.client().messages.parse(
+    resp = llm.api(model).parse(
         model=model,
         max_tokens=8000,
         system=system,
@@ -311,7 +311,7 @@ def _summary_call(system_tpl: str, user_tpl: str, entry: Entry, *, model: str, e
     user = user_tpl.format(kind=entry_kind(entry), title=entry.title,
                            source=f"{entry.feed_name} ({entry.category_name})" if entry.category_name else entry.feed_name,
                            date=_fmt_date(entry.date), content=content)
-    with llm.client().messages.stream(
+    with llm.api(model).stream(
         model=model, max_tokens=max_tokens, system=system,
         messages=[{"role": "user", "content": user}],
         **llm.thinking_params(model, effort),
@@ -355,7 +355,8 @@ def detail_entry(entry: Entry, *, stream_cb=None, rules: dict | None = None) -> 
 
 
 def summary_candidates(limit: int = 100, *, rules: dict | None = None) -> list[Entry]:
-    """Scored entries that deserve a full summary but only have a gist (or nothing)."""
+    """Scored entries in the summary window that deserve a full summary: score >= threshold anywhere,
+    or score >= medium in feeds/categories flagged Summarize. Older entries get one on demand."""
     rules = rules or freshrss.get_rules()
     cfg = db.get_all_settings()
     threshold = int(cfg.get("summary_threshold", 7))
@@ -365,6 +366,7 @@ def summary_candidates(limit: int = 100, *, rules: dict | None = None) -> list[E
     sum_feeds = [int(f["id"]) for f in feeds if freshrss.rule_for(f, rules)["summarize"]]
     if not score_feeds:
         return []
+    medium_min = int(cfg.get("label_medium_min", 4))
     rows = db.fetch_all(
         f"""
         SELECT e.id FROM {freshrss.T_ENTRY} e
@@ -372,13 +374,13 @@ def summary_candidates(limit: int = 100, *, rules: dict | None = None) -> list[E
         WHERE e.id_feed = ANY(%s)
           AND e.attributes LIKE '%%"ai_score"%%'
           AND (s.summarized_at IS NULL)
-          AND (e.is_read = 0 OR e.date >= %s)
-          AND ((e.attributes::jsonb->>'ai_score')::int >= %s OR e.id_feed = ANY(%s))
-          AND (e.attributes::jsonb->>'ai_score')::int > 0
+          AND e.date >= %s
+          AND ((e.attributes::jsonb->>'ai_score')::int >= %s
+               OR (e.id_feed = ANY(%s) AND (e.attributes::jsonb->>'ai_score')::int >= %s))
           AND (s.entry_id IS NULL OR s.attempts < %s OR s.updated_at < now() - (%s || ' seconds')::interval)
         ORDER BY e.date DESC LIMIT %s
         """,
-        (score_feeds, since, threshold, sum_feeds or [0], MAX_ATTEMPTS, str(RETRY_AFTER_S), int(limit)),
+        (score_feeds, since, threshold, sum_feeds or [0], max(1, medium_min), MAX_ATTEMPTS, str(RETRY_AFTER_S), int(limit)),
     )
     return freshrss.get_entries([r["id"] for r in rows], with_content=True) if rows else []
 
@@ -437,7 +439,7 @@ def apply_feedback(entry: Entry, direction: str, reason: str = "") -> str:
         source=entry.feed_name, reason=f' Their reason: "{reason.strip()}".' if reason and reason.strip() else "",
         gist=entry.attributes.get("ai_summary") or truncate(html_to_text(entry.content), 400),
     )
-    resp = llm.client().messages.create(
+    resp = llm.api(model).create(
         model=model, max_tokens=6000, system=prompts.FEEDBACK_SYSTEM,
         messages=[{"role": "user", "content": user}],
         **llm.thinking_params(model, "medium"),
