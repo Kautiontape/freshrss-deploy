@@ -11,7 +11,7 @@ jobs:
     steps:
       - name: Deploy via SSH
         run: |
-          ssh shawn@freshrss bash -s <<'SCRIPT'
+          ssh -o StrictHostKeyChecking=accept-new shawn@freshrss bash -s <<'SCRIPT'
           set -e
           cd ~/freshrss
           git pull --ff-only
