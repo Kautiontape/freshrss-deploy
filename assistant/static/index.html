@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>News Assistant</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%B0%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/app.css">
+</head>
+<body>
+<div id="app">
+  <aside id="sidebar">
+    <div class="brand"><span class="logo">📰</span> <span>News Assistant</span></div>
+    <nav>
+      <a href="#/chat" data-nav="chat">Chat</a>
+      <a href="#/reader" data-nav="reader">Reader</a>
+      <a href="#/briefs" data-nav="briefs">Briefs</a>
+      <a href="#/settings" data-nav="settings">Settings</a>
+    </nav>
+    <div id="chat-list-wrap">
+      <div class="side-head"><span>Recent chats</span><button id="new-chat-btn" class="mini" title="New chat">+</button></div>
+      <ul id="chat-list"></ul>
+    </div>
+    <div id="status-bar" class="muted small"></div>
+  </aside>
+  <main id="main"></main>
+</div>
+<div id="login" class="hidden">
+  <form id="login-form">
+    <h2>News Assistant</h2>
+    <input type="password" id="login-password" placeholder="Password" autocomplete="current-password" autofocus>
+    <button type="submit">Sign in</button>
+    <div id="login-error" class="error"></div>
+  </form>
+</div>
+<script src="/static/vendor/marked.min.js"></script>
+<script src="/static/vendor/purify.min.js"></script>
+<script src="/static/app.js"></script>
+</body>
+</html>

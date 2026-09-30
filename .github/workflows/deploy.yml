@@ -16,6 +16,7 @@ jobs:
           cd ~/freshrss
           git pull --ff-only
           git submodule update --init --recursive
-          docker compose up -d --remove-orphans
+          docker compose pull --ignore-buildable
+          docker compose up -d --build --remove-orphans
           docker compose ps
           SCRIPT

@@ -1,6 +1,6 @@
 services:
   freshrss:
-    image: freshrss/freshrss:latest
+    image: freshrss/freshrss:1.30.0
     container_name: freshrss
     restart: unless-stopped
     ports:
@@ -9,7 +9,6 @@ services:
       - freshrss_data:/var/www/FreshRSS/data
       - freshrss_extensions:/var/www/FreshRSS/extensions
       - ./xExtension-AiAssistant:/var/www/FreshRSS/extensions/xExtension-AiAssistant:ro
-      - ./config/ai-scoring-cron:/etc/cron.d/ai-scoring:ro
     environment:
       TZ: America/New_York
       CRON_MIN: "*/15"
@@ -20,6 +19,10 @@ services:
       FRESHRSS_DB_BASE: ${POSTGRES_DB:-freshrss}
       FRESHRSS_DB_USER: ${POSTGRES_USER:-freshrss}
       FRESHRSS_DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      # The AI Assistant extension proxies AI actions to the assistant service
+      ASSISTANT_URL: http://assistant:8000
+      ASSISTANT_INTERNAL_TOKEN: ${ASSISTANT_INTERNAL_TOKEN:-}
+      ASSISTANT_PUBLIC_URL: ${ASSISTANT_PUBLIC_URL:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -51,15 +54,28 @@ services:
     networks:
       - newsletter
 
-  digest:
-    build: ./digest
-    container_name: digest
+  # AI assistant: scoring worker, briefs, chat UI. Talks to Postgres directly.
+  assistant:
+    build: ./assistant
+    container_name: assistant
     restart: unless-stopped
     env_file: .env
+    environment:
+      TZ: America/New_York
+      FRESHRSS_DB_HOST: postgres
+      FRESHRSS_DB_PORT: 5432
+      FRESHRSS_USER: ${FRESHRSS_API_USER:-shawn}
+      FRESHRSS_PUBLIC_URL: ${FRESHRSS_PUBLIC_URL:-http://freshrss.yuffie.ts.net:8080}
+      YOUTUBE_HELPER_URL: http://youtube-helper:8000
+    ports:
+      - "${ASSISTANT_PORT:-8081}:8000"
     volumes:
       - ./config:/app/config:ro
     depends_on:
-      - freshrss
+      postgres:
+        condition: service_healthy
+      youtube-helper:
+        condition: service_started
     networks:
       - newsletter
 
