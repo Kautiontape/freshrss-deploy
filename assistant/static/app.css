@@ -92,7 +92,9 @@ details.thinking div { white-space: pre-wrap; padding: 6px 10px; }
 .empty h2 { color: var(--text); }
 
 /* Reader */
-.entry { display: grid; grid-template-columns: 40px 1fr auto; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.entry { display: grid; grid-template-columns: 40px 1fr auto; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); align-items: start; }
+.entry .badge, .entry .tag { justify-self: start; margin-top: 2px; }
+.entry > button { margin-top: 2px; }
 .entry .title { font-weight: 600; text-decoration: none; color: var(--text); }
 .entry .meta { font-size: 12px; color: var(--muted); }
 .entry .summary { font-size: 13px; margin-top: 2px; }
