@@ -20,14 +20,25 @@ _SCRIPT = re.compile(r"<(script|style)\b[^>]*>.*?</\1>", re.I | re.S)
 _TAG = re.compile(r"<[^>]+>")
 _AI_CONTAINER = re.compile(r'<div class="ai-assistant-container".*?</div>', re.S)
 _DETAILS = re.compile(r"<details class=\"ai-(?:transcript|fullcontent)-section\">.*?</details>", re.S)
+_HEADING_TAG = re.compile(r"<h[1-6]\b[^>]*>(.*?)</h[1-6]>", re.I | re.S)
+_BOLD_PARA = re.compile(r"<p\b[^>]*>\s*<(strong|b)\b[^>]*>((?:(?!</?(?:strong|b)\b).)*)</\1>\s*</p>", re.I | re.S)
 
 
-def html_to_text(raw: str) -> str:
+def _heading_line(inner: str) -> str:
+    text = re.sub(r"\s+", " ", html.unescape(_TAG.sub("", inner))).strip()
+    return f"\n## {text}\n" if 0 < len(text) <= 150 else f"\n{inner}\n"
+
+
+def html_to_text(raw: str, headings: bool = False) -> str:
+    """Plain text from entry HTML. With headings=True, h1-h6 and bold-only paragraphs become '## ' lines."""
     if not raw:
         return ""
     s = _AI_CONTAINER.sub("", raw)
     s = _DETAILS.sub("", s)
     s = _SCRIPT.sub("", s)
+    if headings:
+        s = _HEADING_TAG.sub(lambda m: _heading_line(m.group(1)), s)
+        s = _BOLD_PARA.sub(lambda m: _heading_line(m.group(2)), s)
     s = _BLOCK_END.sub("\n", s)
     s = _BR.sub("\n", s)
     s = _CELL_END.sub("  ", s)

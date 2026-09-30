@@ -153,6 +153,14 @@ CREATE TABLE IF NOT EXISTS ai.chat_messages (
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS chat_messages_chat_idx ON ai.chat_messages (chat_id, id);
+
+CREATE TABLE IF NOT EXISTS ai.article_outlines (
+    entry_id BIGINT PRIMARY KEY,
+    digest TEXT NOT NULL,
+    outline TEXT NOT NULL,
+    model TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
 """
 
 

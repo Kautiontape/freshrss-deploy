@@ -65,8 +65,10 @@ def entry_kind(entry: Entry) -> str:
 
 
 def entry_text(entry: Entry, max_chars: int, *, allow_fetch: bool = True, allow_transcript: bool = True,
-               rules: dict | None = None) -> str:
-    """Best available text for an entry, filling caches (transcript / full content) when allowed."""
+               rules: dict | None = None, headings: bool = False) -> str:
+    """Best available text for an entry, filling caches (transcript / full content) when allowed.
+
+    headings=True keeps HTML headings as '## ' lines (see content.html_to_text)."""
     attrs = entry.attributes
     if entry.is_youtube:
         transcript = attrs.get("yt_transcript")
@@ -75,9 +77,9 @@ def entry_text(entry: Entry, max_chars: int, *, allow_fetch: bool = True, allow_
             transcript = entry.attributes.get("yt_transcript")
         if transcript:
             return truncate(transcript, max_chars)
-        return truncate(html_to_text(entry.content), max_chars)
+        return truncate(html_to_text(entry.content, headings), max_chars)
 
-    text = html_to_text(entry.content)
+    text = html_to_text(entry.content, headings)
     full = attrs.get("full_content")
     if full:
         return truncate(full if len(full) > len(text) else text, max_chars)
@@ -530,11 +532,16 @@ class Worker:
                 def do_sum(e: Entry) -> int:
                     try:
                         summarize_entry(e, rules=rules)
-                        return 1
                     except (anthropic.APIError, RuntimeError, ValueError) as ex:
                         log.warning("summary failed for %s: %s", e.id, ex)
                         _bump_attempt([e.id], str(ex))
                         return 0
+                    try:  # long articles get their chat outline now, so the first chat does not wait
+                        from . import article
+                        article.prebuild(e, rules)
+                    except Exception as ex:
+                        log.warning("outline failed for %s: %s", e.id, ex)
+                    return 1
 
                 with ThreadPoolExecutor(max_workers=max(1, settings.scoring_concurrency)) as pool:
                     n_sum = sum(pool.map(do_sum, cands))

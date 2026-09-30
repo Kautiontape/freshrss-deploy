@@ -16,7 +16,7 @@ from typing import Any, Iterator
 import anthropic
 from psycopg.types.json import Jsonb
 
-from . import db, freshrss, llm, prompts, scoring
+from . import article, db, freshrss, llm, prompts, scoring
 from .config import settings
 from .content import html_to_text, truncate
 from .freshrss import Entry
@@ -100,6 +100,33 @@ TOOLS: list[dict[str, Any]] = [
 ]
 
 WEB_SEARCH_TOOL = {"type": "web_search_20260209", "name": "web_search", "max_uses": 5}
+
+
+def _article_tools(entry_scoped: bool) -> list[dict[str, Any]]:
+    """search_article / read_article. In an entry chat the entry is implied; elsewhere it is a parameter."""
+    target = "this article" if entry_scoped else "one long entry"
+    entry_prop = {} if entry_scoped else {"entry_id": {"type": "string", "description": "Entry id, as returned by search_entries."}}
+    entry_req = [] if entry_scoped else ["entry_id"]
+    return [
+        {
+            "name": "search_article",
+            "description": f"Keyword search inside {target}. Returns the best-matching chunk numbers with their section and a snippet. Search on distinctive words (names, companies, numbers); put a phrase in double quotes to require it exactly.",
+            "input_schema": {"type": "object", "properties": {
+                **entry_prop,
+                "query": {"type": "string"},
+                "limit": {"type": "integer", "default": 8, "maximum": 20},
+            }, "required": [*entry_req, "query"]},
+        },
+        {
+            "name": "read_article",
+            "description": f"Read a range of chunks from {target}, inclusive (about {article.CHUNK_CHARS} characters each, up to ~{article.READ_MAX_CHARS // 1000}k characters per call). Read a search hit with a chunk or two either side for context, or a whole outline section by its range.",
+            "input_schema": {"type": "object", "properties": {
+                **entry_prop,
+                "start": {"type": "integer", "description": "First chunk number."},
+                "end": {"type": "integer", "description": "Last chunk number (default start + 2)."},
+            }, "required": [*entry_req, "start"]},
+        },
+    ]
 
 
 # ── Tool execution ──────────────────────────────────────────────────────────
@@ -190,6 +217,28 @@ def tool_search_entries(args: dict) -> Any:
     return {"count": len(entries), "entries": [_entry_row(e) for e in entries]}
 
 
+def _article(entry_id: str) -> article.Article:
+    entry = freshrss.get_entry(entry_id, with_content=True)
+    if not entry:
+        raise ValueError(f"entry {entry_id} not found")
+    return article.load(entry)
+
+
+def tool_search_article(args: dict) -> Any:
+    art = _article(str(args["entry_id"]))
+    limit = max(1, min(int(args.get("limit") or 8), 20))
+    return {"total_chunks": len(art.chunks), "hits": art.search(str(args.get("query") or ""), limit)}
+
+
+def tool_read_article(args: dict) -> Any:
+    art = _article(str(args["entry_id"]))
+    start = int(args.get("start") or 0)
+    end = int(args["end"]) if args.get("end") is not None else start + 2
+    if start >= len(art.chunks):
+        return {"error": f"chunk {start} is out of range; the last chunk is #{len(art.chunks) - 1}"}
+    return art.read(start, end)
+
+
 def tool_read_entries(args: dict) -> Any:
     ids = [str(i) for i in (args.get("entry_ids") or [])][:8]
     max_chars = max(500, min(int(args.get("max_chars") or 12000), MAX_ENTRY_CHARS))
@@ -200,6 +249,8 @@ def tool_read_entries(args: dict) -> Any:
         row = _entry_row(e)
         row.update({"reason": e.attributes.get("ai_score_reason"), "detail": e.attributes.get("ai_detail"),
                     "author": e.author, "text": text})
+        if text.endswith(" […]"):
+            row["truncated"] = "Text was cut off; use search_article / read_article with this entry id for the rest."
         out.append(row)
     missing = sorted(set(ids) - {r["id"] for r in out})
     return {"entries": out, "missing": missing}
@@ -247,16 +298,20 @@ TOOL_IMPL = {
     "update_interest_profile": tool_update_profile,
     "list_briefs": tool_list_briefs,
     "get_brief_run": tool_get_brief_run,
+    "search_article": tool_search_article,
+    "read_article": tool_read_article,
 }
 
 
-def execute_tool(name: str, args: Any) -> tuple[str, bool]:
-    """Returns (json_text, is_error)."""
+def execute_tool(name: str, args: Any, chat: dict | None = None) -> tuple[str, bool]:
+    """Returns (json_text, is_error). In an entry chat, article tools default to that entry."""
     fn = TOOL_IMPL.get(name)
     if fn is None:
         return json.dumps({"error": f"unknown tool {name}"}), True
     if not isinstance(args, dict):
         return json.dumps({"error": "tool input must be an object"}), True
+    if name in ("search_article", "read_article") and chat and chat.get("context_type") == "entry":
+        args = {**args, "entry_id": chat["context_id"]}
     try:
         result = fn(args)
         return json.dumps(result, ensure_ascii=False, default=str), False
@@ -368,27 +423,41 @@ def _today() -> str:
     return datetime.now().astimezone().strftime("%A, %B %-d, %Y %H:%M %Z")
 
 
+def _entry_article(chat: dict) -> article.Article:
+    entry = freshrss.get_entry(chat["context_id"], with_content=True)
+    if not entry:
+        raise ValueError("entry not found")
+    return article.load(entry)
+
+
 def build_system(chat: dict) -> tuple[list[dict], list[dict]]:
     """Returns (system_blocks, tools) for a chat."""
     profile = (db.get_setting("interest_profile") or "").strip()
     ctype = chat.get("context_type") or "general"
     if ctype == "entry":
-        entry = freshrss.get_entry(chat["context_id"], with_content=True)
-        if not entry:
-            raise ValueError("entry not found")
-        content = scoring.entry_text(entry, MAX_ENTRY_CHARS)
+        art = _entry_article(chat)
+        entry = art.entry
         extras = ""
         if entry.attributes.get("ai_summary"):
             extras += f"\nPrevious summary: {entry.attributes['ai_summary']}\n"
         if entry.attributes.get("ai_detail"):
             extras += f"\nPrevious breakdown:\n{entry.attributes['ai_detail']}\n"
         kind = scoring.entry_kind(entry)
-        text = prompts.ENTRY_CHAT_SYSTEM.format(
-            kind=kind, kind_cap=kind[0].upper() + kind[1:], title=entry.title, source=entry.feed_name,
-            date=scoring._fmt_date(entry.date), content=content, extras=extras, profile=profile)
+        common = dict(kind=kind, kind_cap=kind[0].upper() + kind[1:], title=entry.title, source=entry.feed_name,
+                      date=scoring._fmt_date(entry.date), extras=extras, profile=profile)
+        if art.is_long:
+            outline = article.outline_nowait(art) or "(The outline is still being built. Use search_article to find things, or read_article to go through the chunks in order.)"
+            opening, opening_last = art.opening()
+            text = prompts.ENTRY_CHAT_LONG_SYSTEM.format(
+                **common, chars=len(art.text), n_chunks=len(art.chunks), last=len(art.chunks) - 1,
+                outline=outline, opening=opening, opening_last=opening_last)
+            tools = _article_tools(entry_scoped=True) + [WEB_SEARCH_TOOL]
+        else:
+            text = prompts.ENTRY_CHAT_SYSTEM.format(**common, content=art.text)
+            tools = [WEB_SEARCH_TOOL]
         system = [{"type": "text", "text": text, "cache_control": {"type": "ephemeral"}},
                   {"type": "text", "text": f"Current date/time: {_today()}"}]
-        return system, [WEB_SEARCH_TOOL]
+        return system, tools
 
     text = prompts.CHAT_SYSTEM.format(profile=profile or "(none configured)")
     blocks = [{"type": "text", "text": text, "cache_control": {"type": "ephemeral"}}]
@@ -400,7 +469,7 @@ def build_system(chat: dict) -> tuple[list[dict], list[dict]]:
                 name=run["brief_name"], period=f"{run['period_start']} to {run['period_end']}", run_id=run["id"],
                 content=run["content_md"] or "", entry_ids=", ".join(str(i) for i in run["entry_ids"]))})
     blocks.append({"type": "text", "text": f"Current date/time: {_today()}. Reader timezone: {settings.timezone}. FreshRSS is at {settings.freshrss_public_url}."})
-    return blocks, TOOLS + [WEB_SEARCH_TOOL]
+    return blocks, TOOLS + _article_tools(entry_scoped=False) + [WEB_SEARCH_TOOL]
 
 
 # ── Agent loop ──────────────────────────────────────────────────────────────
@@ -481,7 +550,7 @@ def run_turn(chat_id: int, user_text: str, *, model: str | None = None, effort: 
         results = []
         for tu in tool_uses:
             yield {"type": "tool_call", "name": tu.name, "input": tu.input}
-            out, is_err = execute_tool(tu.name, tu.input)
+            out, is_err = execute_tool(tu.name, tu.input, chat)
             yield {"type": "tool_result", "name": tu.name, "text": truncate(out, 300), "is_error": is_err}
             results.append({"type": "tool_result", "tool_use_id": tu.id, "content": out, "is_error": is_err})
         _store(chat_id, "user", results)
