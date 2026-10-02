@@ -11,19 +11,20 @@
   It is a thin display layer: renders scores/summaries from entry attributes, preserves them on entry updates
   (`entry_before_update` hook), and proxies on-demand actions (summarize/detail/chat/feedback) to the assistant
   service using `ASSISTANT_URL` + `ASSISTANT_INTERNAL_TOKEN` (env vars on the freshrss container).
-- Deploy directory inside the LXC: `/home/shawn/freshrss/`
+- Deploy directory inside the LXC: `/etc/komodo/stacks/freshrss/` (Komodo's clone, root-owned). Secrets:
+  `/opt/freshrss/.env` (root, 0600)
 - FreshRSS at `freshrss.yuffie.ts.net:8080`, assistant UI at `freshrss.yuffie.ts.net:8081`. The extension also
   registers a FreshRSS page (`?c=assistant`, "✨ Assistant" nav button) that embeds the UI in an iframe and signs
   in via `/sso` (HMAC over a timestamp with `ASSISTANT_INTERNAL_TOKEN`); this needs the same hostname for both.
 
 ## Deployment
 
-- GitHub Actions workflow on push to `main`
-- Runner: self-hosted `[self-hosted, ktn]` on the kautiontape-new DigitalOcean droplet
-- Deploy: ktn SSHs into the freshrss LXC (`shawn@freshrss` via Tailscale), runs `git pull`, `docker compose pull`,
-  `docker compose up -d --build --remove-orphans`
+- Komodo deploys it: stack `freshrss` in `shawnsquire/ansible-fleet` (`komodo/resources.toml`)
+- Komodo's 15-minute poll redeploys only when `docker-compose.yml`, a Dockerfile or a `requirements.txt` changes.
+  Commits that only touch app code or the submodule need a manual Deploy in Komodo
+- A deploy runs `git pull`, `git submodule update --init --recursive`, `docker compose build`, `pull`, `up -d`
 - The submodule must be pushed before the parent repo for deploys to succeed
-- New env vars must be added to the server `.env` before pushing (compose uses `${VAR:-}` defaults for optional ones)
+- New env vars must be added to `/opt/freshrss/.env` before deploying (compose uses `${VAR:-}` defaults for optional ones)
 
 ## Repos
 

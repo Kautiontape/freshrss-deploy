@@ -69,9 +69,10 @@ the channel id is wrong.
 
 ## Deployment
 
-- Push to `main` triggers `.github/workflows/deploy.yml` on the self-hosted `ktn` runner,
-  which SSHes into the freshrss LXC and runs `git pull`, `docker compose pull`, and
-  `docker compose up -d --build --remove-orphans`.
+- Komodo deploys the stack `freshrss` (defined in `shawnsquire/ansible-fleet`, `komodo/resources.toml`)
+  into `/etc/komodo/stacks/freshrss` on the freshrss LXC. Secrets live in `/opt/freshrss/.env` there.
+- Its 15-minute poll redeploys when `docker-compose.yml`, a Dockerfile or a `requirements.txt`
+  changes. Commits that only touch app code or the submodule need a manual Deploy in Komodo.
 - The extension is a git submodule (`xExtension-AiAssistant`); push it before the parent.
 
 ## Local development
