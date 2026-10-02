@@ -30,7 +30,7 @@ services:
       - newsletter
 
   postgres:
-    image: postgres:16-alpine
+    image: postgres:18-alpine
     container_name: freshrss-db
     restart: unless-stopped
     volumes:
