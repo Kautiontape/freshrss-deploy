@@ -1,0 +1,18 @@
+name: ci
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        context: [assistant, youtube-helper]
+    uses: Kautiontape/ci/.github/workflows/docker-build.yml@main
+    with:
+      context: ${{ matrix.context }}
