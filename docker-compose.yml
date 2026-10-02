@@ -59,7 +59,8 @@ services:
     build: ./assistant
     container_name: assistant
     restart: unless-stopped
-    env_file: .env
+    # Komodo points this at the host's /opt/freshrss/.env; local runs use ./.env.
+    env_file: ${FRESHRSS_ENV_FILE:-.env}
     environment:
       TZ: America/New_York
       FRESHRSS_DB_HOST: postgres
