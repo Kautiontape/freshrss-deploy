@@ -49,7 +49,7 @@ services:
 
   # Built on GitHub; build-publish.yml pins the tag on each push to main.
   youtube-helper:
-    image: ghcr.io/kautiontape/freshrss-youtube-helper:sha-0e62a5f3ec9a4d7725b8a01900ad03fd6d2b3611
+    image: ghcr.io/kautiontape/freshrss-youtube-helper:sha-65dcad985720c29f133deb05c4ba370977e961f4
     container_name: youtube-helper
     restart: unless-stopped
     networks:
@@ -57,7 +57,7 @@ services:
 
   # AI assistant: scoring worker, briefs, chat UI. Talks to Postgres directly.
   assistant:
-    image: ghcr.io/kautiontape/freshrss-assistant:sha-0e62a5f3ec9a4d7725b8a01900ad03fd6d2b3611
+    image: ghcr.io/kautiontape/freshrss-assistant:sha-65dcad985720c29f133deb05c4ba370977e961f4
     container_name: assistant
     restart: unless-stopped
     # Komodo points this at the host's /opt/freshrss/.env; local runs use ./.env.
