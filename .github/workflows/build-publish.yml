@@ -1,0 +1,80 @@
+name: build & publish
+# Build the assistant and youtube-helper images on GitHub's runners, then pin
+# their new tags in docker-compose.yml. Komodo's poll redeploys only when the
+# compose file changes, so the pin is what ships app code, config/ and the
+# extension submodule. The freshrss LXC never builds (its 8 GB disk dropped
+# to 415 MB free during an on-box build on 2026-10-03).
+on:
+  push:
+    branches: [main]
+    paths-ignore: ["**.md"]
+  workflow_dispatch:
+# Only main publishes and pins. A manual run on another branch just builds,
+# so unmerged code can't reach the compose file.
+concurrency:
+  group: build-publish-${{ github.ref }}
+  cancel-in-progress: true
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: true
+      matrix:
+        service: [assistant, youtube-helper]
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v4
+      - if: github.ref == 'refs/heads/main'
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v7
+        with:
+          context: ./${{ matrix.service }}
+          platforms: linux/amd64
+          push: ${{ github.ref == 'refs/heads/main' }}
+          tags: |
+            ghcr.io/kautiontape/freshrss-${{ matrix.service }}:latest
+            ghcr.io/kautiontape/freshrss-${{ matrix.service }}:sha-${{ github.sha }}
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha,scope=${{ matrix.service }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.service }}
+
+  pin:
+    # Pushes made with GITHUB_TOKEN don't start workflows, so this commit
+    # doesn't loop. No-op until the compose file references these images.
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - name: Pin the new tags in docker-compose.yml
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          sed -i -E "s#(ghcr\.io/kautiontape/freshrss-(assistant|youtube-helper)):sha-[0-9a-f]{40}#\1:sha-${SHA}#" docker-compose.yml
+          if git diff --quiet; then
+            echo "No image references to pin."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "deploy: Pin images to ${SHA::7} [skip ci]"
+          for _ in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git pull --rebase origin main
+          done
+          exit 1
