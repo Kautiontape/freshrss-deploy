@@ -1,0 +1,8 @@
+# Local builds for `docker compose up -d --build`. Compose reads this file
+# automatically; Komodo passes -f docker-compose.yml, so production pulls the
+# GHCR images instead.
+services:
+  youtube-helper:
+    build: ./youtube-helper
+  assistant:
+    build: ./assistant

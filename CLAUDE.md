@@ -20,9 +20,13 @@
 ## Deployment
 
 - Komodo deploys it: stack `freshrss` in `shawnsquire/ansible-fleet` (`komodo/resources.toml`)
-- Komodo's 15-minute poll redeploys only when `docker-compose.yml`, a Dockerfile or a `requirements.txt` changes.
-  Commits that only touch app code or the submodule need a manual Deploy in Komodo
-- A deploy runs `git pull`, `git submodule update --init --recursive`, `docker compose build`, `pull`, `up -d`
+- Images are built on GitHub, never on the LXC (8 GB disk). `build-publish.yml` runs on every push to main except
+  `*.md`-only ones, publishes `ghcr.io/kautiontape/freshrss-{assistant,youtube-helper}:sha-<commit>`, then commits
+  the new tags to `docker-compose.yml` as github-actions[bot]. Pull before pushing again
+- Komodo's 15-minute poll redeploys only when `docker-compose.yml` changes, so the bot's pin commit is what deploys
+  app code, `config/` and submodule bumps
+- A deploy runs `git pull`, `git submodule update --init --recursive`, `docker compose pull`, `up -d`
+- `docker-compose.override.yml` holds the `build:` sections for local runs; Komodo passes `-f docker-compose.yml`
 - The submodule must be pushed before the parent repo for deploys to succeed
 - New env vars must be added to `/opt/freshrss/.env` before deploying (compose uses `${VAR:-}` defaults for optional ones)
 

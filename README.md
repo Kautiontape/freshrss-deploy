@@ -71,8 +71,10 @@ the channel id is wrong.
 
 - Komodo deploys the stack `freshrss` (defined in `shawnsquire/ansible-fleet`, `komodo/resources.toml`)
   into `/etc/komodo/stacks/freshrss` on the freshrss LXC. Secrets live in `/opt/freshrss/.env` there.
-- Its 15-minute poll redeploys when `docker-compose.yml`, a Dockerfile or a `requirements.txt`
-  changes. Commits that only touch app code or the submodule need a manual Deploy in Komodo.
+- Every push to main (except `*.md`-only) runs `build-publish.yml`: GitHub builds the assistant and
+  youtube-helper images, then a bot commit pins their new `sha-` tags in `docker-compose.yml`. Komodo's
+  15-minute poll sees that change and deploys, so app code, `config/` and submodule bumps all ship
+  within about 20 minutes. Pull before your next push, because of the bot commit.
 - The extension is a git submodule (`xExtension-AiAssistant`); push it before the parent.
 
 ## Local development
