@@ -29,12 +29,16 @@ services:
     networks:
       - newsletter
 
+  # The official image with older Postgres binaries added: on start it runs
+  # pg_upgrade --link in place when the data is from an older major, so a
+  # major bump is a tag change. It deletes the old cluster; dump first.
   postgres:
-    image: postgres:16-alpine
+    image: pgautoupgrade/pgautoupgrade:18-alpine
     container_name: freshrss-db
     restart: unless-stopped
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      # 18+ keeps data in /var/lib/postgresql/<major>/docker.
+      - postgres_data:/var/lib/postgresql
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-freshrss}
       POSTGRES_USER: ${POSTGRES_USER:-freshrss}
@@ -44,6 +48,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      # Room for an upgrade before failures count.
+      start_period: 2m
     networks:
       - newsletter
 
