@@ -2,8 +2,11 @@
 
 ## Architecture
 
-- **FreshRSS** (pinned image `freshrss/freshrss:1.30.0`) runs in Docker inside **LXC 112** (`freshrss`) on **Yuffie** (Proxmox host)
+- **FreshRSS** (pinned `freshrss/freshrss` tag, bumped by Renovate) runs in Docker inside **LXC 112** (`freshrss`) on **Yuffie** (Proxmox host)
 - Docker Compose runs four services: `freshrss`, `postgres`, `youtube-helper`, and `assistant`
+- `postgres` is `pgautoupgrade/pgautoupgrade:<major>-alpine` with the volume at `/var/lib/postgresql` (data in
+  `18/docker`). A major tag bump runs `pg_upgrade --link` in place on start and deletes the old cluster, so take a
+  `pg_dump` first. Renovate opens database majors only after approval on the Dependency Dashboard
 - **assistant/** is a Python (FastAPI + Anthropic SDK) service that owns all AI work: background scoring worker,
   full summaries, scheduled briefs, and the chat UI. It talks to the FreshRSS Postgres database directly
   (entry `attributes` JSON, native labels/tags) and keeps its own tables in the `ai` schema.
